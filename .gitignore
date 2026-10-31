@@ -1,0 +1,75 @@
+# ==================================
+# PYTHON CACHE FILES
+# ==================================
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ==================================
+# VIRTUAL ENVIRONMENTS
+# ==================================
+venv/
+.venv/
+env/
+
+# ==================================
+# TEST CACHE
+# ==================================
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ==================================
+# SECRETS AND CREDENTIALS
+# ==================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+credentials.json
+
+# ==================================
+# PRIVATE DATASETS
+# ==================================
+cleaned_dataset.csv
+phishing_email.pdf.csv
+external_validation_data/
+
+# ==================================
+# LOCAL APPLICATION DATA
+# ==================================
+app_data/
+*.db
+*.sqlite3
+
+# ==================================
+# PRIVATE EMAIL SAMPLES
+# ==================================
+*.eml
+
+# ==================================
+# EDITOR AND IDE FILES
+# ==================================
+.vscode/
+.idea/
+
+# ==================================
+# OPERATING SYSTEM FILES
+# ==================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================================
+# LOGS AND TEMPORARY FILES
+# ==================================
+*.log
+*.tmp
+*.bak
+
+# ==================================
+# NODE DEPENDENCIES (IF USED)
+# ==================================
+node_modules/

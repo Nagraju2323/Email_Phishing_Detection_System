@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07100f">
+  <meta name="description" content="Local email phishing detection dashboard using a Logistic Regression model.">
+  <title>Email Phishing Detection System</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="Email Phishing Detection System home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><path d="M16 3 27 7v8c0 7-4.6 11.3-11 14-6.4-2.7-11-7-11-14V7l11-4Z"/><path d="m10.5 16 3.5 3.5 7.5-8"/></svg>
+        </span>
+        <span class="brand-copy"><strong>MAILGUARD</strong><small>THREAT ANALYSIS</small></span>
+      </a>
+
+      <div class="side-label">WORKSPACE</div>
+      <a class="side-link active" href="#overview"><span class="nav-icon" aria-hidden="true">◫</span> Overview</a>
+      <a class="side-link" href="#scanner"><span class="nav-icon" aria-hidden="true">⌕</span> Email scanner</a>
+      <a class="side-link" href="#history"><span class="nav-icon" aria-hidden="true">◷</span> Scan history</a>
+
+      <div class="sidebar-bottom">
+        <div class="local-note"><span class="pulse-dot"></span><span><strong>LOCAL ANALYSIS</strong><small>Email content stays on this machine.</small></span></div>
+        <div class="sidebar-version">MODEL ENVIRONMENT <span>LR · TF-IDF</span></div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="mobile-brand"><span class="pulse-dot"></span> MAILGUARD</div>
+        <div class="breadcrumb">SECURITY OPERATIONS <span>/</span> EMAIL PROTECTION</div>
+        <div class="topbar-right"><span class="api-indicator"><i></i><span id="api-status">CHECKING SYSTEM</span></span><span class="topbar-divider"></span><span class="local-pill">LOCAL INSTANCE</span></div>
+      </header>
+
+      <div class="page-wrap">
+        <section class="page-heading" id="overview">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span> SECURITY DASHBOARD</div>
+            <h1>EMAIL PHISHING<br class="mobile-break"> DETECTION SYSTEM</h1>
+            <p>Analyze message content for phishing indicators with your selected Logistic Regression model.</p>
+          </div>
+          <a class="primary-button heading-button" href="#scanner"><span>＋</span> New email scan</a>
+        </section>
+
+        <section class="stats-grid" aria-label="Real scan statistics">
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-label">TOTAL EMAILS SCANNED</span><span class="stat-icon neutral" aria-hidden="true">⌁</span></div>
+            <div class="stat-number" id="stat-total">—</div><div class="stat-foot">Recorded by this application</div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-label">PHISHING DETECTED</span><span class="stat-icon danger" aria-hidden="true">!</span></div>
+            <div class="stat-number" id="stat-phishing">—</div><div class="stat-foot"><span class="status-dot red"></span> Classified as phishing</div>
+          </article>
+          <article class="stat-card">
+            <div class="stat-top"><span class="stat-label">LEGITIMATE CLASSIFICATIONS</span><span class="stat-icon safe" aria-hidden="true">✓</span></div>
+            <div class="stat-number" id="stat-legitimate">—</div><div class="stat-foot"><span class="status-dot green"></span> Classified as legitimate</div>
+          </article>
+          <article class="stat-card rate-card">
+            <div class="stat-top"><span class="stat-label">PHISHING SHARE</span><span class="stat-icon rate" aria-hidden="true">↗</span></div>
+            <div class="stat-number" id="stat-rate">—</div><div class="rate-track"><span id="rate-bar"></span></div><div class="stat-foot">Of recorded scans</div>
+          </article>
+        </section>
+
+        <section class="workspace-grid" id="scanner">
+          <article class="panel scanner-panel">
+            <div class="panel-heading">
+              <div><div class="eyebrow small-eyebrow">THREAT ANALYSIS</div><h2>Email scanner</h2><p>Paste a message or inspect an .eml file. Links are never opened.</p></div>
+              <span class="panel-status"><i></i> READY</span>
+            </div>
+
+            <div class="scan-tabs" role="tablist" aria-label="Email input method">
+              <button class="scan-tab active" id="tab-paste" type="button" role="tab" aria-selected="true" aria-controls="paste-pane"> <span aria-hidden="true">▤</span> Paste email</button>
+              <button class="scan-tab" id="tab-upload" type="button" role="tab" aria-selected="false" aria-controls="upload-pane"><span aria-hidden="true">⇧</span> Upload .eml</button>
+            </div>
+
+            <div class="input-pane" id="paste-pane" role="tabpanel" aria-labelledby="tab-paste">
+              <label class="field-label" for="email-subject">SUBJECT <span>OPTIONAL</span></label>
+              <input id="email-subject" class="text-input" type="text" maxlength="500" placeholder="e.g. Action required: account verification" autocomplete="off">
+              <label class="field-label content-label" for="email-content">EMAIL CONTENT <span id="character-count">0 / 100,000</span></label>
+              <textarea id="email-content" class="text-area" maxlength="100000" placeholder="Paste the email text here…" spellcheck="false"></textarea>
+              <div class="input-hint"><span class="hint-lock" aria-hidden="true">▣</span> Content is processed locally and is not saved in scan history.</div>
+              <div class="form-actions"><button id="analyze-button" class="primary-button" type="button"><span class="button-icon" aria-hidden="true">⌕</span> Analyze email</button><button id="clear-button" class="secondary-button" type="button">Clear</button></div>
+            </div>
+
+            <div class="input-pane hidden" id="upload-pane" role="tabpanel" aria-labelledby="tab-upload">
+              <label class="field-label" for="eml-file">EMAIL MESSAGE FILE <span>MAX 1 MiB</span></label>
+              <label class="dropzone" id="dropzone" for="eml-file">
+                <span class="upload-icon" aria-hidden="true">⇧</span>
+                <strong>Choose an .eml file</strong>
+                <span class="dropzone-subtitle">or drop a file here</span>
+                <span class="file-name" id="file-name">No file selected</span>
+                <input id="eml-file" type="file" accept=".eml,message/rfc822">
+              </label>
+              <div class="upload-note"><strong>Safe parsing:</strong> Text and HTML are converted to readable text. Scripts are ignored, attachments are not opened, and URLs are never visited.</div>
+              <div class="form-actions"><button id="upload-button" class="primary-button" type="button"><span class="button-icon" aria-hidden="true">⌕</span> Analyze .eml</button><button id="upload-clear-button" class="secondary-button" type="button">Clear</button></div>
+            </div>
+
+            <div id="scan-error" class="inline-error hidden" role="alert"></div>
+          </article>
+
+          <aside class="panel model-panel">
+            <div class="model-panel-top"><div class="eyebrow small-eyebrow">ACTIVE CLASSIFIER</div><span class="model-ready" id="model-ready"><i></i> LOADING</span></div>
+            <div class="model-emblem" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M32 5 53 13v16c0 13.3-8.8 21.7-21 29C19.8 50.7 11 42.3 11 29V13L32 5Z"/><path d="M23 31h18M32 22v18"/></svg></div>
+            <h2>Logistic Regression</h2>
+            <p class="model-description">Linear text classifier with TF-IDF features. The saved, selected model is used without retraining.</p>
+            <div class="model-specs"><div><span>FEATURE EXTRACTION</span><strong>TF-IDF · uni/bi-grams</strong></div><div><span>MODEL STATUS</span><strong id="model-status-text">Checking artifacts</strong></div><div><span>DECISION THRESHOLD</span><strong>0.50 probability</strong></div></div>
+            <div class="model-caution"><span aria-hidden="true">ⓘ</span><p>Predictions are screening signals, not a security guarantee. Verify sensitive requests independently.</p></div>
+          </aside>
+        </section>
+
+        <section class="panel result-panel hidden" id="result-panel" aria-live="polite" aria-label="Email scan result">
+          <div class="result-header"><div><div class="eyebrow small-eyebrow">ANALYSIS COMPLETE</div><h2>Scan result</h2></div><button class="icon-button" id="dismiss-result" type="button" aria-label="Dismiss result">×</button></div>
+          <div class="result-summary" id="result-summary"></div>
+          <div class="result-details-grid"><div class="result-detail"><span class="detail-label">PREDICTION PROBABILITY</span><strong id="result-probability">—</strong><div class="probability-track"><span id="result-probability-bar"></span></div></div><div class="result-detail"><span class="detail-label">PHISHING PROBABILITY</span><strong id="result-phishing-probability">—</strong></div></div>
+          <div class="result-columns"><div><h3>Warning indicators</h3><ul id="result-indicators"></ul></div><div><h3>Suspicious wording</h3><div id="result-keywords" class="keyword-list"></div><h3 class="urls-heading">Extracted URLs <small>(not visited)</small></h3><ul id="result-urls" class="url-list"></ul></div></div>
+          <div class="result-warning"><strong>Safety reminder</strong><span id="result-warning-text"></span></div>
+        </section>
+
+        <section class="panel history-panel" id="history">
+          <div class="panel-heading history-heading"><div><div class="eyebrow small-eyebrow">RECENT ACTIVITY</div><h2>Scan history</h2><p>Only scan metadata is stored. Email body content is not retained.</p></div><button class="secondary-button danger-text" id="clear-history" type="button">Clear history</button></div>
+          <div class="history-table-wrap"><table><thead><tr><th>EMAIL SUBJECT</th><th>SENDER</th><th>SCANNED</th><th>CLASSIFICATION</th><th>PROBABILITY</th></tr></thead><tbody id="history-body"></tbody></table><div id="history-empty" class="empty-state"><span aria-hidden="true">◷</span><strong>No scans recorded</strong><small>Scanned emails will appear here.</small></div></div>
+        </section>
+
+        <footer class="page-footer"><span>MAILGUARD · EMAIL PHISHING DETECTION SYSTEM</span><span>LOCAL ANALYSIS · NO LINKS OPENED</span></footer>
+      </div>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
