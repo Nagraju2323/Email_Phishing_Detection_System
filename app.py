@@ -14,7 +14,6 @@ from typing import Annotated
 from urllib.parse import urlparse
 
 import joblib
-import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -49,6 +48,13 @@ TERM_MATCHERS = {
     category: [(term, re.compile(r"(?i)(?<!\w)" + re.escape(term) + r"(?!\w)")) for term in terms]
     for category, terms in SUSPICIOUS_TERMS.items()
 }
+ATTACHMENT_CONTEXT_RE = re.compile(
+    r"(?i)\b(?:attached\s+(?:file|document|spreadsheet)|attachment|attached document)\b"
+)
+ENABLE_SETTINGS_RE = re.compile(
+    r"(?i)\b(?:enable|allow|turn on|activate)\b.{0,50}\b(?:settings|macros|active content|editing|content)\b"
+)
+DOCUMENT_ACCESS_RE = re.compile(r"(?i)\b(?:open|view|access)\b.{0,50}\b(?:file|document|contents?)\b")
 
 
 class ScanTextRequest(BaseModel):
@@ -235,9 +241,9 @@ def _analyze_email(subject, content, sender="", recipient="", attachment_count=0
 
     features = VECTORIZER.transform([normalized])
     probabilities = MODEL.predict_proba(features)[0]
+    model_class = int(MODEL.classes_[int(probabilities.argmax())])
+    model_confidence = float(probabilities.max())
     phishing_probability = float(probabilities[list(MODEL.classes_).index(1)])
-    predicted_class = 1 if phishing_probability >= 0.5 else 0
-    prediction_probability = phishing_probability if predicted_class == 1 else 1.0 - phishing_probability
     urls = _extract_urls(model_input, extra_urls)
     lower_text = (subject + "\n" + content).casefold()
     matched_terms = []
@@ -248,11 +254,29 @@ def _analyze_email(subject, content, sender="", recipient="", attachment_count=0
             categories.append(category)
             matched_terms.extend(matches)
 
+    # Enabling document settings or active content to view an attachment is a
+    # high-risk behavior. Apply this only when attachment, enablement, and
+    # document-access wording all appear together.
+    attachment_instruction = bool(
+        ATTACHMENT_CONTEXT_RE.search(lower_text)
+        and ENABLE_SETTINGS_RE.search(lower_text)
+        and DOCUMENT_ACCESS_RE.search(lower_text)
+    )
+    predicted_class = 1 if attachment_instruction else model_class
+    prediction_probability = model_confidence
+    if attachment_instruction:
+        categories.append("High-risk attachment instruction")
+        matched_terms.extend(("attached file", "enable settings", "view document contents"))
+
     indicators = list(_url_indicators(urls))
     if categories:
         indicators.append("Potentially risky wording: " + ", ".join(categories) + ".")
     else:
         indicators.append("No configured urgency, credential, account-verification, or financial-request terms matched.")
+    if attachment_instruction:
+        indicators.append(
+            "High-risk pattern: the email asks you to enable document settings or active content to view an attachment."
+        )
     if sender:
         indicators.append("Sender information was present in the message.")
     if attachment_count:
@@ -268,6 +292,18 @@ def _analyze_email(subject, content, sender="", recipient="", attachment_count=0
         "This model result is an indicator, not proof. A legitimate classification does not guarantee that an email is safe. "
         "Verify unexpected requests through a known, independent contact method."
     )
+    if attachment_instruction and model_class == 0:
+        decision_explanation = (
+            f"The text model classified this as legitimate with {model_confidence:.1%} confidence "
+            f"({phishing_probability:.1%} phishing probability). A separate high-risk attachment rule "
+            "flagged the request to enable settings to view the document, so the displayed result is phishing."
+        )
+    else:
+        decision_explanation = (
+            "The model label comes from learned TF-IDF text patterns and a 0.50 phishing-probability threshold. "
+            "Other warning indicators are informational and do not change the model label. "
+            "The model does not verify sender authentication or check URL reputation."
+        )
     scan_id, scanned_at = _save_scan(
         subject=subject,
         sender=sender,
@@ -282,14 +318,18 @@ def _analyze_email(subject, content, sender="", recipient="", attachment_count=0
         "sender": sender,
         "recipient": recipient,
         "classification": classification,
+        "model_classification": "phishing" if model_class == 1 else "legitimate",
+        "decision_source": "attachment_instruction_rule" if attachment_instruction else "logistic_regression",
         "label": label,
         "prediction_probability": prediction_probability,
+        "model_confidence": model_confidence,
         "phishing_probability": phishing_probability,
         "suspicious_keywords": sorted(set(matched_terms)),
         "keyword_categories": categories,
         "urls": urls,
         "indicators": indicators,
         "warning": warning,
+        "decision_explanation": decision_explanation,
         "model": "Logistic Regression + TF-IDF",
     }
 

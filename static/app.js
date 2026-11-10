@@ -76,6 +76,7 @@ function renderResult(result) {
   }
 
   $("#result-probability").textContent = formatPercent(result.prediction_probability);
+  $("#result-model-class").textContent = `Model classification: ${result.model_classification}`;
   $("#result-phishing-probability").textContent = formatPercent(result.phishing_probability);
   $("#result-probability-bar").style.width = `${Math.max(0, Math.min(100, result.prediction_probability * 100))}%`;
   appendTextList($("#result-indicators"), result.indicators, "No additional indicators were extracted.");
@@ -97,6 +98,7 @@ function renderResult(result) {
     }
   }
   $("#result-warning-text").textContent = result.warning;
+  $("#result-explanation").textContent = result.decision_explanation;
   resultPanel.classList.remove("hidden");
   resultPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 }

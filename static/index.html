@@ -116,14 +116,15 @@
         <section class="panel result-panel hidden" id="result-panel" aria-live="polite" aria-label="Email scan result">
           <div class="result-header"><div><div class="eyebrow small-eyebrow">ANALYSIS COMPLETE</div><h2>Scan result</h2></div><button class="icon-button" id="dismiss-result" type="button" aria-label="Dismiss result">×</button></div>
           <div class="result-summary" id="result-summary"></div>
-          <div class="result-details-grid"><div class="result-detail"><span class="detail-label">PREDICTION PROBABILITY</span><strong id="result-probability">—</strong><div class="probability-track"><span id="result-probability-bar"></span></div></div><div class="result-detail"><span class="detail-label">PHISHING PROBABILITY</span><strong id="result-phishing-probability">—</strong></div></div>
+          <div class="result-details-grid"><div class="result-detail"><span class="detail-label">MODEL CONFIDENCE</span><strong id="result-probability">—</strong><div class="probability-track"><span id="result-probability-bar"></span></div><small id="result-model-class"></small></div><div class="result-detail"><span class="detail-label">MODEL PHISHING PROBABILITY</span><strong id="result-phishing-probability">—</strong></div></div>
+          <p class="decision-explanation" id="result-explanation"></p>
           <div class="result-columns"><div><h3>Warning indicators</h3><ul id="result-indicators"></ul></div><div><h3>Suspicious wording</h3><div id="result-keywords" class="keyword-list"></div><h3 class="urls-heading">Extracted URLs <small>(not visited)</small></h3><ul id="result-urls" class="url-list"></ul></div></div>
           <div class="result-warning"><strong>Safety reminder</strong><span id="result-warning-text"></span></div>
         </section>
 
         <section class="panel history-panel" id="history">
           <div class="panel-heading history-heading"><div><div class="eyebrow small-eyebrow">RECENT ACTIVITY</div><h2>Scan history</h2><p>Only scan metadata is stored. Email body content is not retained.</p></div><button class="secondary-button danger-text" id="clear-history" type="button">Clear history</button></div>
-          <div class="history-table-wrap"><table><thead><tr><th>EMAIL SUBJECT</th><th>SENDER</th><th>SCANNED</th><th>CLASSIFICATION</th><th>PROBABILITY</th></tr></thead><tbody id="history-body"></tbody></table><div id="history-empty" class="empty-state"><span aria-hidden="true">◷</span><strong>No scans recorded</strong><small>Scanned emails will appear here.</small></div></div>
+          <div class="history-table-wrap"><table><thead><tr><th>EMAIL SUBJECT</th><th>SENDER</th><th>SCANNED</th><th>CLASSIFICATION</th><th>MODEL CONFIDENCE</th></tr></thead><tbody id="history-body"></tbody></table><div id="history-empty" class="empty-state"><span aria-hidden="true">◷</span><strong>No scans recorded</strong><small>Scanned emails will appear here.</small></div></div>
         </section>
 
         <footer class="page-footer"><span>MAILGUARD · EMAIL PHISHING DETECTION SYSTEM</span><span>LOCAL ANALYSIS · NO LINKS OPENED</span></footer>
